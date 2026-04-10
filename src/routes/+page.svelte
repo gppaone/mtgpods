@@ -4,7 +4,7 @@
     import { newPlayerId } from '$lib/id.js';
 
     let newName = $state('');
-    let lockSelection = $state([]);
+    let lockSelection = $state(/** @type {string[]} */ ([]));
     let activeTab = $state('players');
 
     function addPlayer() {
@@ -14,6 +14,7 @@
         newName = '';
     }
 
+    /** @param {string} id */
     function removePlayer(id) {
         const idx = players.findIndex(p => p.id === id);
         if (idx !== -1) players.splice(idx, 1);
@@ -40,6 +41,7 @@
         lockSelection = [];
     }
 
+    /** @param {number} i */
     function removeLockGroup(i) {
         lockedGroups.splice(i, 1);
     }
@@ -55,6 +57,7 @@
         activeTab = 'pods';
     }
 
+    /** @param {string} id */
     function toggleLockSelect(id) {
         const i = lockSelection.indexOf(id);
         lockSelection = i === -1 ? [...lockSelection, id] : lockSelection.filter(x => x !== id);
@@ -150,15 +153,14 @@
     
         <ul class="divide-y divide-gray-100 dark:divide-gray-800 mb-4">
             {#each players as p}
-            <li
-                onclick={() => toggleLockSelect(p.id)}
-                class="flex items-center py-2.5 cursor-pointer rounded-lg px-2 transition-colors
-                {lockSelection.includes(p.id) ? 'bg-violet-50 dark:bg-violet-950/40' : 'hover:bg-gray-50 dark:hover:bg-gray-800/80'}"
-            >
-                <span class="flex-1 text-sm text-gray-800 dark:text-gray-200">{p.name}</span>
-                {#if lockSelection.includes(p.id)}
-                <span class="text-xs bg-violet-600 text-white px-2 py-0.5 rounded-full">selected</span>
-                {/if}
+            <li class="py-1.5">
+                <button type="button" onclick={() => toggleLockSelect(p.id)} class="flex w-full text-left py-2.5 cursor-pointer rounded-lg px-2 transition-colors
+                {lockSelection.includes(p.id) ? 'bg-violet-50 dark:bg-violet-950/40' : 'hover:bg-gray-50 dark:hover:bg-gray-800/80'}">
+                    <span class="flex-1 text-sm text-gray-800 dark:text-gray-200">{p.name}</span>
+                    {#if lockSelection.includes(p.id)}
+                    <span class="text-xs bg-violet-600 text-white px-2 py-0.5 rounded-full">selected</span>
+                    {/if}
+                </button>
             </li>
             {/each}
         </ul>
