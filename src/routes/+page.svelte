@@ -6,6 +6,7 @@
     let newName = $state('');
     let lockSelection = $state(/** @type {string[]} */ ([]));
     let activeTab = $state('players');
+    let helpOpen = $state(false);
 
     function addPlayer() {
         const name = newName.trim();
@@ -29,6 +30,21 @@
         lockedGroups.splice(0, lockedGroups.length);
         currentPods.splice(0, currentPods.length);
         history.splice(0, history.length);
+    }
+
+    function openHelp() {
+        helpOpen = true;
+    }
+    function closeHelp() {
+        helpOpen = false;
+    }
+
+    /** @param {KeyboardEvent} e */
+    function onWindowKeydown(e) {
+        if (e.key === 'Escape' && helpOpen) {
+            e.preventDefault();
+            closeHelp();
+        }
     }
 
     function addLockGroup() {
@@ -73,12 +89,14 @@
     ];
 </script>
 
-<main class="max-w-xl mx-auto px-4 py-8 font-sans">
+<svelte:window onkeydown={onWindowKeydown} />
+
+<main class="max-w-xl mx-auto p-4 font-sans">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">MTG Pod Manager</h1>
+    <div class="flex items-center justify-between bg-violet-500 dark:bg-violet-900 p-3 rounded-sm">
+        <h1 class="text-2xl font-bold text-white dark:text-white">TCG Pod Manager</h1>
         <div class="flex items-center gap-2">
-            <span class="text-sm text-gray-500 dark:text-gray-400">Pod size</span>
+            <span class="text-sm text-white dark:text-white">Pod size</span>
             {#each [2, 3, 4] as n}
             <button
                 onclick={() => podSize.value = n}
@@ -92,10 +110,13 @@
     </div>
 
     <!-- Tabs -->
-    <div class="flex gap-1 border-b border-gray-200 dark:border-gray-700 mb-6">
+    <div class="flex gap-1 items-center border-b border-gray-200 dark:border-gray-700 mb-6">
         {#each ['players', 'locks', 'pods', 'history'] as tab}
             <button
+            id={`tab-${tab}`}
+            type="button"
             onclick={() => activeTab = tab}
+            aria-controls={`panel-${tab}`}
             class="px-4 py-2 text-sm font-medium capitalize border-b-2 -mb-px transition-colors
                 {activeTab === tab
                 ? 'border-violet-600 text-violet-700 dark:text-violet-300'
@@ -104,14 +125,31 @@
             {tab}{tab === 'players' ? ` (${players.length})` : tab === 'pods' && currentPods.length ? ` (${currentPods.length})` : ''}
             </button>
         {/each}
+        <button
+            type="button"
+            onclick={openHelp}
+            class="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-400 text-sm font-bold text-white hover:bg-violet-600 touch-manipulation"
+            aria-label="Help"
+        >
+            ?
+        </button>
     </div>
-    <!-- Players tab -->
-    {#if activeTab === 'players'}
+    <!-- Tab panels: keep mounted, toggle `hidden` so inputs/<details> are not recreated (avoids dev-only first-focus quirks) -->
+    <div
+        id="panel-players"
+        hidden={activeTab !== 'players'}
+        class="block"
+    >
         <div class="flex gap-2 mb-4">
             <input
                 bind:value={newName}
                 onkeydown={e => e.key === 'Enter' && addPlayer()}
                 placeholder="Player name"
+                name="player-name"
+                autocomplete="off"
+                autocorrect="off"
+                spellcheck="false"
+                enterkeyhint="done"
                 class="min-w-0 flex-1 px-3 py-3 border border-gray-300 rounded-lg text-[16px] bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-400 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 dark:placeholder:text-gray-500"
             />
             <button
@@ -127,7 +165,7 @@
                 <span class="flex-1 text-sm text-gray-800 dark:text-gray-200">{p.name}</span>
                 <button
                 onclick={() => removePlayer(p.id)}
-                class="text-xs text-orange-600 hover:text-orange-500 border border-orange-200 hover:border-orange-400 px-2.5 py-1 rounded-md transition-colors dark:border-red-800 dark:text-white dark:bg-red-900 dark:hover:border-orange-600"
+                class="text-xs text-red-600 hover:text-red-500 border border-red-200 hover:border-red-400 px-2.5 py-1 rounded-md transition-colors dark:border-red-800 dark:text-white dark:bg-red-900 dark:hover:border-red-600"
                 >Remove</button>
             </li>
             {/each}
@@ -147,10 +185,15 @@
             >Remove all players</button>
         </div>
         {/if}
-    <!-- Locks tab -->
-    {:else if activeTab === 'locks'}
+    </div>
+
+    <div
+        id="panel-locks"
+        hidden={activeTab !== 'locks'}
+        class="block"
+    >
         <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Select 2–3 players who should always share a pod.</p>
-    
+
         <ul class="divide-y divide-gray-100 dark:divide-gray-800 mb-4">
             {#each players as p}
             <li class="py-1.5">
@@ -164,7 +207,7 @@
             </li>
             {/each}
         </ul>
-    
+
         {#if lockSelection.length >= 2}
             <button
             onclick={addLockGroup}
@@ -182,15 +225,19 @@
                 </span>
                 <button
                     onclick={() => removeLockGroup(i)}
-                    class="text-xs text-orange-600 hover:text-orange-500 border border-orange-200 hover:border-orange-400 px-2.5 py-1 rounded-md transition-colors dark:border-orange-800 dark:text-orange-400 dark:hover:border-orange-600"
+                    class="text-xs text-red-600 hover:text-red-500 border border-red-200 hover:border-red-400 px-2.5 py-1 rounded-md transition-colors dark:border-red-800 dark:text-red-400 dark:hover:border-red-600"
                 >Remove</button>
                 </li>
             {/each}
             </ul>
         {/if}
+    </div>
 
-    <!-- Pods tab -->
-    {:else if activeTab === 'pods'}
+    <div
+        id="panel-pods"
+        hidden={activeTab !== 'pods'}
+        class="block"
+    >
         {#if currentPods.length === 0}
             <p class="text-sm text-gray-400 dark:text-gray-500">No pods yet — add players and click "Roll pods".</p>
         {:else}
@@ -208,40 +255,86 @@
             onclick={rollPods}
             class="mt-6 w-full py-3 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-xl transition-colors"
         >New round →</button>
-    {/if}
+        {/if}
+    </div>
 
-    <!-- History tab -->
-    {:else if activeTab === 'history'}
-    {#if history.length === 0}
-        <p class="text-sm text-gray-400 dark:text-gray-500">No history yet.</p>
-    {:else}
-        <div class="flex justify-end mb-3">
-            <button
-            onclick={() => history.splice(0, history.length)}
-                class="text-xs text-orange-600 hover:text-orange-500 border border-orange-200 hover:border-orange-400 px-2.5 py-1 rounded-md transition-colors dark:border-red-800 dark:text-white dark:bg-red-900 dark:hover:border-orange-600"
-            >Clear history</button>
-        </div>
-        <div class="space-y-3">
-            {#each history as round, r}
-                <details class="group">
-                <summary class="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300 py-2 list-none flex justify-between items-center">
-                    <span>Round {history.length - r} — {round.date}</span>
-                    <span class="text-gray-400 dark:text-gray-500 group-open:rotate-180 transition-transform">▾</span>
-                </summary>
-                <div class="grid grid-cols-2 gap-2 mt-2">
-                    {#each round.pods as pod, i}
-                    <div class="rounded-lg border p-3 {podColors[i % podColors.length]}">
-                        <p class="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">Pod {i + 1}</p>
-                        {#each pod as player}
-                        <p class="text-sm text-gray-700 dark:text-gray-200">{player.name}</p>
+    <div
+        id="panel-history"
+        hidden={activeTab !== 'history'}
+        class="block"
+    >
+        {#if history.length === 0}
+            <p class="text-sm text-gray-400 dark:text-gray-500">No history yet.</p>
+        {:else}
+            <div class="flex justify-end mb-3">
+                <button
+                onclick={() => history.splice(0, history.length)}
+                    class="text-xs text-red-600 hover:text-red-500 border border-red-200 hover:border-red-400 px-2.5 py-1 rounded-md transition-colors dark:border-red-800 dark:text-white dark:bg-red-900 dark:hover:border-red-600"
+                >Clear history</button>
+            </div>
+            <div class="space-y-3">
+                {#each history as round, r}
+                    <details class="group">
+                    <summary class="cursor-pointer list-none py-2 text-sm font-medium text-gray-700 dark:text-gray-300 [&::-webkit-details-marker]:hidden">
+                        <span class="flex items-center justify-between gap-2">
+                            <span>Round {history.length - r} — {round.date}</span>
+                            <span class="text-gray-400 transition-transform group-open:rotate-180 dark:text-gray-500">▾</span>
+                        </span>
+                    </summary>
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        {#each round.pods as pod, i}
+                        <div class="rounded-lg border p-3 {podColors[i % podColors.length]}">
+                            <p class="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">Pod {i + 1}</p>
+                            {#each pod as player}
+                            <p class="text-sm text-gray-700 dark:text-gray-200">{player.name}</p>
+                            {/each}
+                        </div>
                         {/each}
                     </div>
-                    {/each}
-                </div>
-                </details>
-            {/each}
+                    </details>
+                {/each}
             </div>
         {/if}
-    {/if}
+    </div>
 
+    <!-- Help modal: backdrop + panel -->
+    {#if helpOpen}
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <button
+                type="button"
+                class="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
+                onclick={closeHelp}
+                aria-label="Close help"
+            ></button>
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="help-title"
+                tabindex="-1"
+                class="relative z-10 max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-600 dark:bg-gray-900"
+            >
+                <div class="flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+                    <h2 id="help-title" class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        Help
+                    </h2>
+                    <button
+                        type="button"
+                        onclick={closeHelp}
+                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xl leading-none text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+                        aria-label="Close help"
+                    >
+                        ×
+                    </button>
+                </div>
+                <div class="space-y-3 px-4 py-4 text-sm text-gray-700 dark:text-gray-300">
+                    <p><strong>Pod Size:</strong> Choose a pod size between 2 and 4 players per pod.</p>
+                    <p><strong>Tabs</strong></p>
+                    <p class="ml-4"><strong>Players Tab:</strong> Add available players to the list.</p>
+                    <p class="ml-4"><strong>Locks Tab:</strong> Select 2–3 players who will stick together.</p>
+                    <p class="ml-4"><strong>Pods Tab:</strong> Shows the current pods and start a new round with new pods.</p>
+                    <p class="ml-4"><strong>History Tab:</strong> Shows previous rounds.</p>
+                </div>
+            </div>
+        </div>
+    {/if}
 </main>

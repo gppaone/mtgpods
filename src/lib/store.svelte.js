@@ -27,7 +27,12 @@ function load(key, fallback) {
  * @param {unknown} val
  */
 function save(key, val) {
-    if (browser) localStorage.setItem(key, JSON.stringify(val));
+	if (!browser) return;
+	try {
+		localStorage.setItem(key, JSON.stringify(val));
+	} catch {
+		// Quota, private mode, or security policy — avoid throwing into Vite’s onerror
+	}
 }
 
 export const players = $state(load('players', /** @type {Player[]} */ ([])));
