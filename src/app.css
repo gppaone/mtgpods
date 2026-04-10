@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+/* Default Tailwind `dark:` uses prefers-color-scheme — do not override with .dark-only unless you add that class in JS */
+
+@layer base {
+	html {
+		color-scheme: light dark;
+	}
+	body {
+		@apply min-h-svh bg-white text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100;
+	}
+}
