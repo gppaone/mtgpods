@@ -94,7 +94,7 @@
 <main class="max-w-xl mx-auto p-4 font-sans">
     <!-- Header -->
     <div class="flex items-center justify-between bg-violet-500 dark:bg-violet-900 p-3 rounded-sm">
-        <h1 class="text-2xl font-bold text-white dark:text-white">TCG Pod Manager</h1>
+        <h1 class="text-2xl font-bold text-white dark:text-white">MTG Pod Manager</h1>
         <div class="flex items-center gap-2">
             <span class="text-sm text-white dark:text-white">Pod size</span>
             {#each [2, 3, 4] as n}
