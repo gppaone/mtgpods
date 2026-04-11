@@ -1,0 +1,12 @@
+services:
+  mtgpods:
+    build: .
+    container_name: mtgpods
+    restart: unless-stopped
+    ports:
+      - "3005:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - BASE_PATH=/mtgpods
+      - ORIGIN=http://wizofcheese.com
